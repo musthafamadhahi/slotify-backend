@@ -1,0 +1,37 @@
+{
+  "name": "slotify-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "prisma": "npx prisma studio --port 1010 --schema=prisma/schema.prisma",
+    "backend": "concurrently \"npm run dev\" \"npm run prisma\"",
+    "migrate": "npx prisma migrate dev --schema=prisma/schema.prisma",
+    "generate": "npx prisma generate --schema=prisma/schema.prisma"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.18",
+    "@types/node": "^22.15.18",
+    "prisma": "^6.10.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "@types/express": "^5.0.1",
+    "axios": "^1.9.0",
+    "chalk": "^4.1.2",
+    "concurrently": "^9.1.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0"
+  }
+}

@@ -3,20 +3,20 @@ import path from 'path';
 import morgan from 'morgan';
 
 // Define the logs directory path
-const logsDirectory = path.join(process.cwd(), 'logs');
+// const logsDirectory = path.join(process.cwd(), 'logs');
 
 // Create the logs directory if it doesn't exist
-if (!fs.existsSync(logsDirectory)) {
-  fs.mkdirSync(logsDirectory, { recursive: true });
-}
+// if (!fs.existsSync(logsDirectory)) {
+//   fs.mkdirSync(logsDirectory, { recursive: true });
+// }
 
 // Create a writable stream for logging to a file in the logs directory
-const logStream = fs.createWriteStream(
-  path.join(logsDirectory, 'requests.log'),
-  {
-    flags: 'a',
-  }
-);
+// const logStream = fs.createWriteStream(
+//   path.join(logsDirectory, 'requests.log'),
+//   {
+//     flags: 'a',
+//   }
+// );
 
 const customFormat: morgan.FormatFn = (tokens, req, res) => {
   const date = new Date();
@@ -38,7 +38,7 @@ const logger = morgan(customFormat, {
   stream: {
     write: (message) => {
       // Log to the file
-      logStream.write(message);
+      // logStream.write(message);
       // Also log to the console
       console.log(message.trim());
     },

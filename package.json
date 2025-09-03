@@ -5,6 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
     "prisma": "npx prisma studio --port 1010 --schema=prisma/schema.prisma",
     "backend": "concurrently \"npm run dev\" \"npm run prisma\"",
     "migrate": "npx prisma migrate dev --schema=prisma/schema.prisma",

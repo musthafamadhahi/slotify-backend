@@ -7,7 +7,7 @@ export const loginController = async (
   res: Response
 ): Promise<void> => {
   try {
-    let { idToken, email, phoneNumber, name } = req.body;
+    let { idToken, email, phoneNumber, name, role } = req.body;
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
@@ -28,15 +28,12 @@ export const loginController = async (
       return;
     }
 
-    if (phoneNumber && !phoneNumber.startsWith('+')) {
-      phoneNumber = `+${phoneNumber}`;
-    }
-
     const newUser = await createUser({
       firebaseUid,
       email,
       phoneNumber,
       name,
+      role,
     });
 
     res.status(201).json({

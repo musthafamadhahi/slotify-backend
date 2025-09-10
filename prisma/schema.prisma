@@ -20,7 +20,113 @@ model User {
   email               String   @unique
   phoneNumber         String?  @unique
   name                String?
+  role                String   @default("USER")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  bookings      Booking[]
+  venues        Venue[]   @relation("VenueOwner")
+}
+
+//
+// VENUES & COURTS
+//
+model Venue {
+  id          Int       @id @default(autoincrement())
+  ownerId     Int
+  name        String
+  description String?
+  location    String?   // can store "lat,long" or use PostGIS extension later
+  address     String?
+  city        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  owner       User      @relation("VenueOwner", fields: [ownerId], references: [id])
+  courts      Court[]
+  openingHours VenueOpeningHour[]
+}
+
+model VenueOpeningHour {
+  id        Int     @id @default(autoincrement())
+  venueId   Int
+  dayOfWeek Int     // 0=Sunday ... 6=Saturday
+  openTime  String  // "06:00"
+  closeTime String  // "22:00"
+
+  venue     Venue   @relation(fields: [venueId], references: [id])
+}
+
+model Court {
+  id        Int       @id @default(autoincrement())
+  venueId   Int
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  venue     Venue     @relation(fields: [venueId], references: [id])
+  sports    CourtSport[]
+  pricing   CourtPricing[]
+  bookings  Booking[]
+}
+
+//
+// SPORTS & COURT MAPPING
+//
+model Sport {
+  id     Int          @id @default(autoincrement())
+  name   String       @unique
+  courts CourtSport[]
+
+  pricings CourtPricing[]  // <-- back relation to CourtPricing
+  bookings Booking[] 
+}
+
+model CourtSport {
+  id      Int    @id @default(autoincrement())
+  courtId Int
+  sportId Int
+
+  court   Court  @relation(fields: [courtId], references: [id])
+  sport   Sport  @relation(fields: [sportId], references: [id])
+
+  @@unique([courtId, sportId])
+}
+
+//
+// COURT PRICING
+//
+model CourtPricing {
+  id        Int     @id @default(autoincrement())
+  courtId   Int
+  sportId   Int?
+  dayOfWeek Int?    // null = applies all days
+  startTime String  // "06:00"
+  endTime   String  // "18:00"
+  price     Int     // price per hour in smallest currency unit
+
+  court     Court   @relation(fields: [courtId], references: [id])
+  sport     Sport?  @relation(fields: [sportId], references: [id])
+}
+
+//
+// BOOKINGS
+//
+model Booking {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  courtId   Int
+  sportId   Int
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  court     Court    @relation(fields: [courtId], references: [id])
+  sport     Sport    @relation(fields: [sportId], references: [id])
+
+  @@index([courtId, startTime, endTime])
+  @@index([sportId])
 }
 

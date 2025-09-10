@@ -6,10 +6,9 @@ const prisma = new PrismaClient();
 export const findUserByFirebaseId = async (firebaseUid: string) => {
   const user = await prisma.user.findUnique({
     where: { firebaseUid },
-    select: { email: true, firebaseUid: true },
+    include: { venues: true },
   });
 
-  console.log('User retrieved from database:', user);
   return user;
 };
 
@@ -32,6 +31,7 @@ export const createUser = async (data: RegisterData) => {
       email: data.email!,
       phoneNumber: data.phoneNumber,
       name: data.name,
+      role: data.role ?? 'USER',
     },
   });
 };

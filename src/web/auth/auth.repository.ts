@@ -32,6 +32,7 @@ export const createUser = async (data: RegisterData) => {
       phoneNumber: data.phoneNumber,
       name: data.name,
       role: data.role ?? 'USER',
+      profileImage: data.photoURL,
     },
   });
 };

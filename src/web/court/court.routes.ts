@@ -1,8 +1,5 @@
 import express from 'express';
-import {
-  createCourtController,
-  createVenueController,
-} from './court.controller';
+import { createCourtController, getSportsController } from './court.controller';
 import {
   authenticate,
   ownerAuthenticate,
@@ -10,7 +7,8 @@ import {
 
 const courtRoutes = express.Router();
 
+courtRoutes.get('/sports', authenticate, getSportsController);
 courtRoutes.post('/create', authenticate, createCourtController);
-courtRoutes.post('/create-venue', authenticate, createVenueController);
+// courtRoutes.post('/create-venue', authenticate, createVenueController);
 
 export default courtRoutes;

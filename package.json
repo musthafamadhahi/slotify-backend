@@ -10,7 +10,8 @@
     "prisma": "npx prisma studio --port 1010 --schema=prisma/schema.prisma",
     "backend": "concurrently \"npm run dev\" \"npm run prisma\"",
     "migrate": "npx prisma migrate dev --schema=prisma/schema.prisma",
-    "generate": "npx prisma generate --schema=prisma/schema.prisma"
+    "generate": "npx prisma generate --schema=prisma/schema.prisma",
+    "script": "ts-node src/scripts/script.ts"
   },
   "keywords": [],
   "author": "",

@@ -7,7 +7,7 @@ export const loginController = async (
   res: Response
 ): Promise<void> => {
   try {
-    let { idToken, email, phoneNumber, name, role } = req.body;
+    let { idToken, email, phoneNumber, name, role, photoURL } = req.body;
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
@@ -34,6 +34,7 @@ export const loginController = async (
       phoneNumber,
       name,
       role,
+      photoURL,
     });
 
     res.status(201).json({

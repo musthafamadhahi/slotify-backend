@@ -12,24 +12,6 @@ export const findUserByFirebaseId = async (firebaseUid: string) => {
   return user;
 };
 
-interface CreateVenueInput {
-  ownerId: number;
-  name: string;
-  description?: string;
-  address?: string;
-  city?: string;
-  location?: string;
-}
-
-export const createVenueRepo = async (data: CreateVenueInput) => {
-  return await prisma.venue.create({
-    data: {
-      ownerId: data.ownerId,
-      name: data.name,
-      description: data.description,
-      address: data.address,
-      city: data.city,
-      location: data.location,
-    },
-  });
+export const getAllSports = async () => {
+  return await prisma.sport.findMany();
 };

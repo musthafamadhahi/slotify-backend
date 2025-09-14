@@ -5,4 +5,5 @@ export interface RegisterData {
   phoneNumber?: string;
   name?: string;
   role?: string;
+  photoURL?: string;
 }

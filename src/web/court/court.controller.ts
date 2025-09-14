@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createVenueRepo } from './court.repository';
+import { getAllSports } from './court.repository';
 
 export const createCourtController = async (
   req: Request,
@@ -25,42 +25,30 @@ export const createCourtController = async (
   }
 };
 
-export const createVenueController = async (
+export const getSportsController = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
+
     if (!userId) {
       res.status(401).json({ message: 'Unauthorized' });
       return;
     }
 
-    const { name, description, address, city, location } = req.body;
+    const sports = await getAllSports();
 
-    if (!name || !city) {
-      res.status(400).json({ message: 'Name and city are required' });
-      return;
-    }
-
-    const venue = await createVenueRepo({
-      ownerId: userId,
-      name,
-      description,
-      address,
-      city,
-      location,
-    });
-
-    res.status(201).json({
-      message: 'Venue created successfully',
-      venue,
+    res.status(200).json({
+      sports,
+      message: 'Sports retrieved successfully',
     });
   } catch (err) {
-    console.error(err);
+    console.log(err);
     res.status(400).json({
       message:
         err instanceof Error ? err.message : 'An unexpected error occurred',
     });
+    return;
   }
 };

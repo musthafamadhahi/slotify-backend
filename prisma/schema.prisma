@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Enhanced Prisma schema for Sports Booking Platform
+// Supports multi-role users, complex venue/court management, and advanced search
 
 generator client {
   provider = "prisma-client-js"
@@ -11,40 +8,86 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl      = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL")
 }
 
+// USER MANAGEMENT
 model User {
   id                  Int      @id @default(autoincrement())
   firebaseUid         String   @unique
   email               String   @unique
   phoneNumber         String?  @unique
   name                String?
-  role                String   @default("USER")
+  role                String   @default("USER") // USER, OWNER, ADMIN
+  profileImage        String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  bookings      Booking[]
-  venues        Venue[]   @relation("VenueOwner")
+  // Relations
+  bookings            Booking[]
+  venues              Venue[]   @relation("Owner")
+  reviews             Review[]
+  favoriteVenues      UserFavoriteVenue[]
+
+  @@map("users")
 }
 
-//
-// VENUES & COURTS
-//
-model Venue {
-  id          Int       @id @default(autoincrement())
-  ownerId     Int
-  name        String
-  description String?
-  location    String?   // can store "lat,long" or use PostGIS extension later
-  address     String?
-  city        String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 
-  owner       User      @relation("VenueOwner", fields: [ownerId], references: [id])
-  courts      Court[]
-  openingHours VenueOpeningHour[]
+// VENUE MANAGEMENT
+model Venue {
+  id              Int      @id @default(autoincrement())
+  ownerId         Int
+  name            String
+  description     String?
+  address         String
+  cityId          Int
+  districtId      Int
+  state           String?
+  country         String   @default("Sri Lanka")
+  postalCode      String?
+  latitude        Float?   
+  longitude       Float?
+  phoneNumber     String?
+  email           String?
+  website         String?
+  amenities       String[] // ["Parking", "Restrooms", "Cafe", "Locker Room"]
+  images          String[] // Array of image URLs
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  owner           User               @relation("Owner", fields: [ownerId], references: [id])
+  courts          Court[]
+  openingHours    VenueOpeningHour[]
+  reviews         Review[]
+  favoritedBy     UserFavoriteVenue[]
+  city           City               @relation(fields: [cityId], references: [id])
+  district       District          @relation(fields: [districtId], references: [id])
+
+  @@index([latitude, longitude]) // For geo-search
+  @@index([isActive])
+  @@map("venues")
+}
+
+model District {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+
+  cities    City[]
+  venues    Venue[]
+
+  @@map("districts")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  city      String
+  code      String
+  districtId Int
+
+  district  District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  venues    Venue[]
 }
 
 model VenueOpeningHour {
@@ -53,80 +96,188 @@ model VenueOpeningHour {
   dayOfWeek Int     // 0=Sunday ... 6=Saturday
   openTime  String  // "06:00"
   closeTime String  // "22:00"
+  isActive  Boolean @default(true)
 
-  venue     Venue   @relation(fields: [venueId], references: [id])
+  venue     Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, dayOfWeek])
+  @@map("venue_opening_hours")
 }
 
+// COURT MANAGEMENT
 model Court {
-  id        Int       @id @default(autoincrement())
-  venueId   Int
-  name      String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int      @id @default(autoincrement())
+  venueId     Int
+  name        String
+  description String?
+  surface     String?  // "Grass", "Concrete", "Wooden", "Synthetic"
+  size        String?  // "Full Size", "Half Court", "Mini"
+  images      String[] // Array of image URLs
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  venue     Venue     @relation(fields: [venueId], references: [id])
-  sports    CourtSport[]
-  pricing   CourtPricing[]
-  bookings  Booking[]
+  // Relations
+  venue       Venue           @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  sports      CourtSport[]
+  pricing     CourtPricing[]
+  bookings    Booking[]
+  maintenance CourtMaintenance[]
+
+  @@index([venueId])
+  @@index([isActive])
+  @@map("courts")
 }
 
-//
-// SPORTS & COURT MAPPING
-//
-model Sport {
-  id     Int          @id @default(autoincrement())
-  name   String       @unique
-  courts CourtSport[]
+model CourtMaintenance {
+  id          Int      @id @default(autoincrement())
+  courtId     Int
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+  createdAt   DateTime @default(now())
 
-  pricings CourtPricing[]  // <-- back relation to CourtPricing
-  bookings Booking[] 
+  court       Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@index([courtId, startTime, endTime])
+  @@map("court_maintenance")
+}
+
+// SPORTS MANAGEMENT
+model Sport {
+  id              Int    @id @default(autoincrement())
+  name            String @unique
+  description     String?
+  icon            String? // Icon URL or name
+  minPlayers      Int?
+  maxPlayers      Int?
+  estimatedDuration Int? // in minutes
+
+  // Relations
+  courts          CourtSport[]
+  pricing         CourtPricing[]
+  bookings        Booking[]
+
+  @@map("sports")
 }
 
 model CourtSport {
-  id      Int    @id @default(autoincrement())
+  id      Int @id @default(autoincrement())
   courtId Int
   sportId Int
 
-  court   Court  @relation(fields: [courtId], references: [id])
-  sport   Sport  @relation(fields: [sportId], references: [id])
+  court   Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  sport   Sport @relation(fields: [sportId], references: [id], onDelete: Cascade)
 
   @@unique([courtId, sportId])
+  @@map("court_sports")
 }
 
-//
-// COURT PRICING
-//
+// PRICING MANAGEMENT
 model CourtPricing {
-  id        Int     @id @default(autoincrement())
-  courtId   Int
-  sportId   Int?
-  dayOfWeek Int?    // null = applies all days
-  startTime String  // "06:00"
-  endTime   String  // "18:00"
-  price     Int     // price per hour in smallest currency unit
+  id               Int     @id @default(autoincrement())
+  courtId          Int
+  sportId          Int?    // null = applies to all sports on this court
+  name             String? // "Weekday Morning", "Weekend Premium"
+  dayOfWeek        Int?    // null = applies all days, 0=Sunday ... 6=Saturday
+  startTime        String  // "06:00"
+  endTime          String  // "18:00"
+  pricePerHour     Int     // price per hour in smallest currency unit (cents/paisa)
+  minimumDuration  Int     @default(60) // minimum booking duration in minutes
+  isActive         Boolean @default(true)
+  validFrom        DateTime?
+  validUntil       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  court     Court   @relation(fields: [courtId], references: [id])
-  sport     Sport?  @relation(fields: [sportId], references: [id])
+  // Relations
+  court            Court   @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  sport            Sport?  @relation(fields: [sportId], references: [id], onDelete: SetNull)
+
+  @@index([courtId, dayOfWeek, startTime, endTime])
+  @@index([sportId])
+  @@index([isActive])
+  @@map("court_pricing")
 }
 
-//
-// BOOKINGS
-//
+// BOOKING MANAGEMENT
 model Booking {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  courtId   Int
-  sportId   Int
-  startTime DateTime
-  endTime   DateTime
-  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
-  createdAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  courtId         Int
+  sportId         Int
+  startTime       DateTime
+  endTime         DateTime
+  totalPrice      Int      // total booking price in smallest currency unit
+  pricePerHour    Int      // price per hour at booking time
+  status          BookingStatus @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentId       String?  // Payment gateway reference
+  notes           String?
+  cancellationReason String?
+  cancelledAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id])
-  court     Court    @relation(fields: [courtId], references: [id])
-  sport     Sport    @relation(fields: [sportId], references: [id])
+  // Relations
+  user            User     @relation(fields: [userId], references: [id])
+  court           Court    @relation(fields: [courtId], references: [id])
+  sport           Sport    @relation(fields: [sportId], references: [id])
 
   @@index([courtId, startTime, endTime])
+  @@index([userId, createdAt])
   @@index([sportId])
+  @@index([status])
+  @@index([startTime, endTime]) // For availability checks
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIAL_REFUND
+}
+
+// REVIEWS & RATINGS
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  venueId   Int
+  rating    Int      // 1-5 stars
+  comment   String?
+  images    String[] // Array of image URLs
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, venueId]) // One review per user per venue
+  @@index([venueId, rating])
+  @@map("reviews")
+}
+
+// SEARCH & FAVORITES
+model UserFavoriteVenue {
+  id      Int @id @default(autoincrement())
+  userId  Int
+  venueId Int
+
+  user    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue   Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, venueId])
+  @@map("user_favorite_venues")
 }
 

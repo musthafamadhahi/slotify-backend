@@ -41,7 +41,22 @@ export const getVenue = async (userId: number) => {
       },
       city: true,
       district: true,
-      courts: true,
+      courts: {
+        include: {
+          sports: {
+            select: {
+              id: true,
+              sportId: true,
+              sport: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
 };
@@ -103,7 +118,22 @@ export const createVenue = async (
         },
         city: true,
         district: true,
-        courts: true,
+        courts: {
+          include: {
+            sports: {
+              select: {
+                id: true,
+                sportId: true,
+                sport: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
   });

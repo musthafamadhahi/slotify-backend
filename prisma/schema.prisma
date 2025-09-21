@@ -177,9 +177,9 @@ model CourtSport {
 model CourtPricing {
   id               Int     @id @default(autoincrement())
   courtId          Int
-  sportId          Int?    // null = applies to all sports on this court
+  sportId          Int[]    // null = applies to all sports on this court
   name             String? // "Weekday Morning", "Weekend Premium"
-  dayOfWeek        Int?    // null = applies all days, 0=Sunday ... 6=Saturday
+  dayOfWeek        Int[]    // null = applies all days, 0=Sunday ... 6=Saturday
   startTime        String  // "06:00"
   endTime          String  // "18:00"
   pricePerHour     Int     // price per hour in smallest currency unit (cents/paisa)
